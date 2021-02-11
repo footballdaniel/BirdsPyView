@@ -3,3 +3,4 @@ test images/
 BirdsPyView/output.csv
 .vscode/
 *.ipynb
+/venv/
