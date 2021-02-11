@@ -4,25 +4,40 @@ import pandas as pd
 from helpers import Homography, VoronoiPitch, Play, PitchImage, PitchDraw, get_table_download_link
 from pitch import FootballPitch
 
-colors = {'black': '#000000',
-          'blue': '#0000ff',
-          'brown': '#a52a2a',
-          'cyan': '#00ffff',
-          'grey': '#808080',
-          'green': '#008000',
-          'magenta': '#ff00ff',
-          'maroon': '#800000',
-          'orange': '#ffa500',
-          'pink': '#ffc0cb',
-          'red': '#ff0000',
-          'white': '#ffffff',
-          'yellow': '#ffff00'}
+tags = {
+    'Ball location @ pass start event -500 ms': '#000000',
+    'Direct opponent @ pass start event -500 ms': '#00ffff',
+    'Pass receiver @ pass start event -500ms': '#000000',
+    'Interception candidate @ pass start event -500ms': '#ff00ff',
+
+    'Ball location @ pass start event': '#000000',
+    'Direct opponent @ pass start event': '#a52a2a',
+    'Pass receiver @ pass start event': '#000000',
+    'Interception candidate @ pass start event': '#808080',
+
+    'Ball location @ pass end event': '#0000ff',
+    'Direct opponent @ pass end event': '#a52a2a',
+    'Pass receiver @ pass end event': '#000000',
+    'Interception candidate @ pass end event': '#008000',
+
+    'Body orientation # TODO': '#FFFFFF'
+}
 
 st.set_option('deprecation.showfileUploaderEncoding', False)
 st.beta_set_page_config(page_title='BirdsPyView', layout='wide')
+
 st.title('Upload Image or Video')
 uploaded_file = st.file_uploader("Select Image file to open:", type=["png", "jpg", "mp4"])
 pitch = FootballPitch()
+
+def download_data(dfCoords):
+    st.title('Data inspection and download')
+    st.markdown(get_table_download_link(dfCoords[['team', 'x', 'y', 'time']]), unsafe_allow_html=True)
+
+def visualize_data(dfCoords):
+    st.write('Player Coordinates:')
+    # Displays only the relevant columns
+    st.dataframe(dfCoords[['team', 'x', 'y', 'time']])
 
 if uploaded_file:
     if uploaded_file.type == 'video/mp4':
@@ -31,7 +46,6 @@ if uploaded_file:
         image = PitchImage(pitch, image=play.get_frame(t))
     else:
         image = PitchImage(pitch, image_bytes=uploaded_file)
-
 
     st.title('Pitch lines')
 
@@ -76,19 +90,21 @@ if uploaded_file:
                 st.write('Converted image:')
                 st.image(image.conv_im)
 
+            # Writing to dataframe
             st.title('Players')
-            st.write('Draw rectangle over players on image. '+
+            st.write('Draw rectangle over players on image. ' +
                      'The player location is assumed to the middle of the base of the rectangle.')
 
-            p_col1, p_col2, p_col_, p_col3 = st.beta_columns([2,1,0.5,1])
+            p_col1, p_col2, p_col3 = st.beta_columns([2,1,1])
 
+            # Dropdown boxes
             with p_col2:
-                team_color = st.selectbox("Team color: ", list(colors.keys()))
-                stroke_color=colors[team_color]
+                team_color = st.selectbox("Select Player: ", list(tags.keys()))
+                stroke_color=tags[team_color]
                 edit = st.checkbox('Edit mode (move selection boxes)')
                 update = st.button('Update data')
-                original = True #st.checkbox('Select on original image', value=True)
-
+                original = True #st.checkbox('Select on original image', value=True)       
+      
             image2 = image.get_image(original)
             height2 = image2.height
             width2 = image2.width
@@ -116,39 +132,15 @@ if uploaded_file:
                         dfCoords['x'] = (dfCoords['left']+dfCoords['width']*dfCoords['scaleX'])
                         dfCoords['y'] = (dfCoords['top']+dfCoords['height']*dfCoords['scaleY'])
                     dfCoords[['x', 'y']] = dfCoords[['x', 'y']]/image.h.coord_converter
-                    dfCoords['team'] = dfCoords.apply(lambda x: {code: color for color,code in colors.items()}.get(x['stroke']),
+                    dfCoords['team'] = dfCoords.apply(lambda x: {code: color for color,code in tags.items()}.get(x['stroke']),
                                                       axis=1)
+                    dfCoords['time'] = t
 
-                with p_col3:
-                    st.write('Player Coordinates:')
-                    st.dataframe(dfCoords[['team', 'x', 'y']])
 
-                st.title('Final Output')
-                voronoi = VoronoiPitch(dfCoords)
-                sensitivity = int(st.slider("Sensitivity (decrease if it is drawing over the players; "+
-                                            "increase if the areas don't cover the whole pitch)"
-                                            , 0, 30, value=10)*2.5)
-                o_col1, o_col2, o_col3 = st.beta_columns((3,1,3))
-                with o_col2:
-                    show_voronoi = st.checkbox('Show Voronoi', value=True)
-                    voronoi_opacity = int(st.slider('Voronoi Opacity', 0, 100, value=20)*2.5)
-                    player_highlights = st.multiselect('Players to highlight', list(dfCoords.index))
-                    player_size = st.slider('Circle size', 1, 10, value=2)
-                    player_opacity = int(st.slider('Circle Opacity', 0, 100, value=50)*2.5)
-                with o_col1:
-                    draw = PitchDraw(image, original=True)
-                    if show_voronoi:
-                        draw.draw_voronoi(voronoi, image, voronoi_opacity)
-                    for pid, coord in dfCoords.iterrows():
-                        if pid in player_highlights:
-                            draw.draw_circle(coord[['x','y']].values, coord['team'], player_size, player_opacity)
-                    st.image(draw.compose_image(sensitivity))
-                with o_col3:
-                    draw = PitchDraw(image, original=False)
-                    for pid, coord in dfCoords.iterrows():
-                        draw.draw_circle(coord[['x','y']].values, coord['team'], 2, player_opacity)
-                        draw.draw_text(coord[['x','y']]+0.5, f"{pid}", coord['team'])
-                    st.image(draw.compose_image(sensitivity))
+if 'dfCoords' in globals():
+    download_data(dfCoords)
+    visualize_data(dfCoords)
 
-                st.markdown(get_table_download_link(dfCoords[['team', 'x', 'y']]), unsafe_allow_html=True)
+    print("have to transform data")
 
+st.text("Adapted from https://github.com/rjtavares/BirdsPyView")
