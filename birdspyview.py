@@ -1,8 +1,8 @@
+from dataclasses import dataclass
 import streamlit as st
 import pandas as pd
 from helpers import (
     download_data,
-    visualize_data,
     visualize_pitch,
     get_field_lines,
     get_converted_positional_data,
@@ -10,32 +10,46 @@ from helpers import (
 from pitch import FootballPitch
 from streamlit_drawable_canvas import st_canvas
 
-
-positional_data = pd.DataFrame()
-
 tags = {
-    "Direct opponent @ Pre pass": "#00ffff",
-    "Intended pass receiver @ Pre pass": "#00ffff",
-    "Interception candidate @ Pre pass": "#00ffff",
+    "Direct opponent @ Pre pass": "#00fff1",
+    "Intended pass receiver @ Pre pass": "#00ffff2",
+    "Interception candidate @ Pre pass": "#00fff3",
     "Ball @ Start pass": "#a52a2a",
-    "Direct opponent @ Start pass": "#a52a2a",
-    "Intended pass receiver @ Start pass": "#a52a2a",
-    "Interception candidate @ Start pass": "#a52a2a",
-    "Ball @ End pass": "#FFFFFF",
-    "Direct opponent @ End pass": "#FFFFFF",
-    "Pass receiver @ End pass": "#FFFFFF",
-    "Interception candidate @ End pass": "#FFFFFF",
-    "Body orientation # TODO": "#FFFFFF",
+    "Direct opponent @ Start pass": "#a52a2b",
+    "Intended pass receiver @ Start pass": "#a52a2c",
+    "Interception candidate @ Start pass": "#a52a2d",
+    "Ball @ End pass": "#FFFFF1",
+    "Direct opponent @ End pass": "#FFFFF2",
+    "Pass receiver @ End pass": "#FFFFF3",
+    "Interception candidate @ End pass": "#FFFFF4",
+    "Body orientation # TODO": "#FFFFF5",
 }
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
 st.beta_set_page_config(page_title="BirdsPyView", layout="wide")
+
+
+@dataclass
+class SessionState:
+    positional_data = pd.DataFrame(
+        columns=["team", "x", "y", "time", "player_name", "game_time", "player_role"]
+    )
+
+
+@st.cache(allow_output_mutation=True)
+def fetch_session():
+    session = SessionState()
+    return session
+
+
+session = fetch_session()
 
 st.title("Upload Image or Video")
 uploaded_file = st.file_uploader(
     "Select Image file to open:", type=["png", "jpg", "mp4"]
 )
 pitch = FootballPitch()
+
 
 if uploaded_file:
     t, snapshot = visualize_pitch(uploaded_file, pitch)
@@ -83,6 +97,7 @@ if uploaded_file:
                 stroke_color = tags[team_color]
                 edit = st.checkbox("Edit mode (move selection boxes)")
                 original = True  # st.checkbox('Select on original image', value=True)
+                situation_id = st.text_input("Situation ID (e.g. 1)")
                 player_name = st.text_input("Interception candidate player name")
                 player_role = st.selectbox(
                     "Interception candidate role",
@@ -126,20 +141,53 @@ if uploaded_file:
                     )
 
                     # Add metadata to dataframe
+                    dfCoords["situation_id"] = situation_id
                     dfCoords["time"] = t
                     dfCoords["player_name"] = player_name
                     dfCoords["game_time"] = game_time
                     dfCoords["player_role"] = player_role
 
+                    columns_of_interest = dfCoords.loc[
+                        :,
+                        [
+                            "team",
+                            "x",
+                            "y",
+                            "time",
+                            "player_name",
+                            "game_time",
+                            "player_role",
+                            "situation_id",
+                        ],
+                    ]
+
+                    session.positional_data = pd.concat(
+                        [session.positional_data, columns_of_interest],
+                        axis=0,
+                    )
+
+                    session.positional_data.drop_duplicates(
+                        keep="last", ignore_index=True, inplace=True
+                    )
+
 if "dfCoords" in globals():
     st.title("Inspect raw dataframe")
-    visualize_data(
-        dfCoords, ["team", "x", "y", "time", "player_name", "game_time", "player_role"]
-    )
+    st.dataframe(session.positional_data)
 
     st.title("Transform to event data and download")
     download_data(
-        dfCoords, ["team", "x", "y", "time", "player_name", "game_time", "player_role"]
+        dfCoords,
+        [
+            "team",
+            "x",
+            "y",
+            "time",
+            "game_time",
+            "player_name",
+            "player_role",
+            "situation_id",
+        ],
     )
 
-st.text("Adapted from https://github.com/rjtavares/BirdsPyView")
+    if st.button("Clear all cached data"):
+        session.positional_data = pd.DataFrame(columns=session.positional_data.columns)

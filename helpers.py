@@ -71,12 +71,6 @@ def download_data(dfCoords, colnames):
     st.markdown(get_table_download_link(dfCoords[colnames]), unsafe_allow_html=True)
 
 
-def visualize_data(dfCoords, colnames):
-    st.write("Player Coordinates:")
-    # Displays only the relevant columns
-    st.dataframe(dfCoords[colnames])
-
-
 def visualize_pitch(uploaded_file, pitch):
     if uploaded_file.type == "video/mp4":
         play = Play(uploaded_file)
