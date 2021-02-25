@@ -2,9 +2,6 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 import pandas as pd
 from helpers import (
-    Play,
-    PitchImage,
-    get_table_download_link,
     download_data,
     visualize_data,
     visualize_pitch,
@@ -12,18 +9,17 @@ from helpers import (
 from pitch import FootballPitch
 
 tags = {
-    "Ball location @ pass start event -500 ms": "#000000",
-    "Direct opponent @ pass start event -500 ms": "#00ffff",
-    "Pass receiver @ pass start event -500ms": "#000000",
-    "Interception candidate @ pass start event -500ms": "#ff00ff",
-    "Ball location @ pass start event": "#000000",
-    "Direct opponent @ pass start event": "#a52a2a",
-    "Pass receiver @ pass start event": "#000000",
-    "Interception candidate @ pass start event": "#808080",
-    "Ball location @ pass end event": "#0000ff",
-    "Direct opponent @ pass end event": "#a52a2a",
-    "Pass receiver @ pass end event": "#000000",
-    "Interception candidate @ pass end event": "#008000",
+    "Direct opponent @ Pre pass": "#00ffff",
+    "Intended pass receiver @ Pre pass": "#00ffff",
+    "Interception candidate @ Pre pass": "#00ffff",
+    "Ball @ Start pass": "#a52a2a",
+    "Direct opponent @ Start pass": "#a52a2a",
+    "Intended pass receiver @ Start pass": "#a52a2a",
+    "Interception candidate @ Start pass": "#a52a2a",
+    "Ball @ End pass": "#FFFFFF",
+    "Direct opponent @ End pass": "#FFFFFF",
+    "Pass receiver @ End pass": "#FFFFFF",
+    "Interception candidate @ End pass": "#FFFFFF",
     "Body orientation # TODO": "#FFFFFF",
 }
 
