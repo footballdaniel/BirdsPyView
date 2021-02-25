@@ -32,7 +32,16 @@ st.beta_set_page_config(page_title="BirdsPyView", layout="wide")
 @dataclass
 class SessionState:
     positional_data = pd.DataFrame(
-        columns=["team", "x", "y", "time", "player_name", "game_time", "player_role"]
+        columns=[
+            "team",
+            "x",
+            "y",
+            "time",
+            "player_name",
+            "game_time",
+            "player_role",
+            "situation_id",
+        ]
     )
 
 
@@ -174,7 +183,10 @@ if "dfCoords" in globals():
     st.title("Inspect raw dataframe")
     st.dataframe(session.positional_data)
 
-    st.title("Transform to event data and download")
+    st.title("Downloda data")
+
+    data = session.positional_data
+
     download_data(
         dfCoords,
         [
