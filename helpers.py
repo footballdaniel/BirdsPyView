@@ -3,24 +3,81 @@ import numpy as np
 from shapely.geometry import Polygon, Point
 from shapely.affinity import scale
 from itertools import product
-from PIL import Image, ImageFont, ImageDraw, ImageChops, ImageColor
+from PIL import Image, ImageFont, ImageDraw, ImageColor
 import streamlit as st
 import tempfile
 import base64
+from streamlit_drawable_canvas import st_canvas
+import pandas as pd
 
 
-def download_data(dfCoords):
-    st.title("Data inspection and download")
+def get_converted_positional_data(tags, snapshot, original, canvas_converted):
+    dfCoords = pd.json_normalize(canvas_converted.json_data["objects"])
+    if original:
+        dfCoords["x"] = dfCoords["left"] + (dfCoords["width"] * dfCoords["scaleX"]) / 2
+        dfCoords["y"] = dfCoords["top"] + dfCoords["height"] * dfCoords["scaleY"]
+        dfCoords[["x", "y"]] = snapshot.h.apply_to_points(dfCoords[["x", "y"]].values)
+    else:
+        dfCoords["x"] = dfCoords["left"] + dfCoords["width"] * dfCoords["scaleX"]
+        dfCoords["y"] = dfCoords["top"] + dfCoords["height"] * dfCoords["scaleY"]
+    dfCoords[["x", "y"]] = dfCoords[["x", "y"]] / snapshot.h.coord_converter
+    dfCoords["team"] = dfCoords.apply(
+        lambda x: {code: color for color, code in tags.items()}.get(x["stroke"]),
+        axis=1,
+    )
+    return dfCoords
+
+
+def get_field_lines(pitch, snapshot, col1, col2, col3):
+    with col1:
+        canvas_image = st_canvas(
+            fill_color="rgba(255, 165, 0, 0.3)",
+            stroke_width=2,
+            stroke_color="#e00",
+            background_image=snapshot.im,
+            width=snapshot.im.width,
+            height=snapshot.im.height,
+            drawing_mode="line",
+            key="canvas",
+        )
+    with col2:
+        line_seq = ["UP", "DP", "RPA", "RG"]
+        h_line_options = list(pitch.horiz_lines.keys())
+        v_line_options = list(pitch.vert_lines.keys())
+        hlines = [
+            st.selectbox(
+                f"Horizontal Line #{x+1}",
+                h_line_options,
+                key=f"hline {x}",
+                index=h_line_options.index(line_seq[x]),
+            )
+            for x in range(2)
+        ]
+        vlines = [
+            st.selectbox(
+                f"Vertical Line #{x+1}",
+                v_line_options,
+                key=f"vline {x}",
+                index=v_line_options.index(line_seq[x + 2]),
+            )
+            for x in range(2)
+        ]
+    with col3:
+        st.image("pitch.png", width=300)
+    return canvas_image, hlines, vlines
+
+
+def download_data(dfCoords, colnames):
     st.markdown(
-        get_table_download_link(dfCoords[["team", "x", "y", "time"]]),
+        get_table_download_link(dfCoords[colnames]),
         unsafe_allow_html=True,
     )
 
 
-def visualize_data(dfCoords):
+def visualize_data(dfCoords, colnames):
     st.write("Player Coordinates:")
     # Displays only the relevant columns
-    st.dataframe(dfCoords[["team", "x", "y", "time"]])
+    st.dataframe(dfCoords[colnames])
 
 
 def visualize_pitch(uploaded_file, pitch):
