@@ -10,6 +10,9 @@ from helpers import (
 from pitch import FootballPitch
 from streamlit_drawable_canvas import st_canvas
 
+
+positional_data = pd.DataFrame()
+
 tags = {
     "Direct opponent @ Pre pass": "#00ffff",
     "Intended pass receiver @ Pre pass": "#00ffff",
@@ -93,7 +96,7 @@ if uploaded_file:
                 game_time = st.text_input(
                     "Game time in MM:SS (e.g. 05:00)", max_chars=5
                 )
-                if len(game_time) < 5:
+                if len(game_time) < 5 & len(game_time) > 0:
                     st.warning(
                         "Game time has to have 5 character. use the format 00:00"
                     )

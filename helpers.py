@@ -68,10 +68,7 @@ def get_field_lines(pitch, snapshot, col1, col2, col3):
 
 
 def download_data(dfCoords, colnames):
-    st.markdown(
-        get_table_download_link(dfCoords[colnames]),
-        unsafe_allow_html=True,
-    )
+    st.markdown(get_table_download_link(dfCoords[colnames]), unsafe_allow_html=True)
 
 
 def visualize_data(dfCoords, colnames):
