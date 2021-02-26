@@ -20,6 +20,7 @@ tags = {
     "Direct opponent of pass sender @ Start pass": "#a52a2b",
     "Intended pass receiver @ Start pass": "#a52a2c",
     "Interception candidate @ Start pass": "#a52a2d",
+    "Body orientation visual line @ Start pass": "#a52a2e",
     "Body orientation point 1 @ Start pass": "#FFFFF5",
     "Body orientation point 2 @ Start pass": "#FFFFF6",
     "Ball @ End pass": "#FFFFF1",
@@ -107,7 +108,7 @@ if uploaded_file:
                     "Select Player to annotate position: ", list(tags.keys())
                 )
                 stroke_color = tags[team_color]
-                edit = st.checkbox("Edit mode (move selection boxes)")
+                # body_orientation_lines = st.checkbox("Draw line for body orientation")
                 original = True  # st.checkbox('Select on original image', value=True)
                 situation_id = st.text_input("Situation ID (e.g. 1)", value="1")
                 player_name = st.text_input(
@@ -134,6 +135,11 @@ if uploaded_file:
 
                 update = st.button("Update data")
 
+            if team_color == "Body orientation visual line @ Start pass":
+                body_orientation_lines = True
+            else:
+                body_orientation_lines = False
+
             image2 = snapshot.get_image(original)
             height2 = image2.height
             width2 = image2.width
@@ -143,7 +149,7 @@ if uploaded_file:
                     stroke_width=2,
                     stroke_color=stroke_color,
                     background_image=image2,
-                    drawing_mode="transform" if edit else "rect",
+                    drawing_mode="line" if body_orientation_lines else "rect",
                     update_streamlit=update,
                     height=height2,
                     width=width2,
@@ -197,13 +203,6 @@ if uploaded_file:
 
 if "dfCoords" in globals():
     st.title("Inspect raw dataframe")
-
-    idx_to_delete = st.number_input(
-        "To delete a row, specify the row index here", value=0
-    )
-
-    if st.button("Confirm deletion"):
-        session.positional_data.drop(idx_to_delete, axis=0, inplace=True)
 
     st.dataframe(session.positional_data)
 
