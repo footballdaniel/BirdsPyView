@@ -6,20 +6,22 @@ from helpers import (
     visualize_pitch,
     get_field_lines,
     get_converted_positional_data,
+    VoronoiPitch,
+    PitchDraw,
 )
 from pitch import FootballPitch
 from streamlit_drawable_canvas import st_canvas
 
 tags = {
-    "Direct opponent @ Pre pass": "#00fff1",
+    "Direct opponent of pass sender @ Pre pass": "#00fff1",
     "Intended pass receiver @ Pre pass": "#00ffff2",
     "Interception candidate @ Pre pass": "#00fff3",
     "Ball @ Start pass": "#a52a2a",
-    "Direct opponent @ Start pass": "#a52a2b",
+    "Direct opponent of pass sender @ Start pass": "#a52a2b",
     "Intended pass receiver @ Start pass": "#a52a2c",
     "Interception candidate @ Start pass": "#a52a2d",
     "Ball @ End pass": "#FFFFF1",
-    "Direct opponent @ End pass": "#FFFFF2",
+    "Direct opponent of pass sender @ End pass": "#FFFFF2",
     "Pass receiver @ End pass": "#FFFFF3",
     "Interception candidate @ End pass": "#FFFFF4",
     "Body orientation # TODO": "#FFFFF5",
@@ -82,6 +84,7 @@ if uploaded_file:
             st.write(
                 f"You have drawn {n_lines} lines. Use the Undo button to delete lines."
             )
+
         if n_lines >= 4:
             snapshot.set_info(
                 pd.json_normalize(canvas_image.json_data["objects"]), hlines + vlines
@@ -91,7 +94,7 @@ if uploaded_file:
                 st.write("Converted image:")
                 st.image(snapshot.conv_im)
 
-            st.title("Players")
+            st.title("Annotate positional data")
             st.write(
                 "Draw rectangle over players on image. "
                 + "The player location is assumed to the middle of the base of the rectangle."
@@ -106,8 +109,10 @@ if uploaded_file:
                 stroke_color = tags[team_color]
                 edit = st.checkbox("Edit mode (move selection boxes)")
                 original = True  # st.checkbox('Select on original image', value=True)
-                situation_id = st.text_input("Situation ID (e.g. 1)")
-                player_name = st.text_input("Interception candidate player name")
+                situation_id = st.text_input("Situation ID (e.g. 1)", value="1")
+                player_name = st.text_input(
+                    "Interception candidate player name", value="NaN"
+                )
                 player_role = st.selectbox(
                     "Interception candidate role",
                     [
@@ -118,7 +123,7 @@ if uploaded_file:
                     index=0,
                 )
                 game_time = st.text_input(
-                    "Game time in MM:SS (e.g. 05:00)", max_chars=5
+                    "Game time in MM:SS (e.g. 05:00)", max_chars=5, value="00:00"
                 )
                 if len(game_time) < 5 & len(game_time) > 0:
                     st.warning(
@@ -161,12 +166,29 @@ if uploaded_file:
                         axis=0,
                     )
 
+                    session.positional_data.drop_duplicates(
+                        keep="last", ignore_index=True, inplace=True
+                    )
+
+                st.title("Overlay of positional data of current frame")
+                voronoi = VoronoiPitch(dfCoords)
+
+                sensitivity = 10
+                player_circle_size = 2
+                player_opacity = 100
+                draw = PitchDraw(snapshot, original=True)
+                for pid, coord in dfCoords.iterrows():
+                    draw.draw_circle(
+                        coord[["x", "y"]].values,
+                        "black",
+                        player_circle_size,
+                        player_opacity,
+                    )
+                st.image(draw.compose_image(sensitivity))
+
 
 if "dfCoords" in globals():
     st.title("Inspect raw dataframe")
-    session.positional_data.drop_duplicates(
-        keep="last", ignore_index=True, inplace=True
-    )
 
     st.dataframe(session.positional_data)
 
