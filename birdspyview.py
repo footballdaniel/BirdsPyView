@@ -166,6 +166,16 @@ if uploaded_file:
                         axis=0,
                     )
 
+                    all_columns_except_time = [
+                        col for col in session.positional_data.columns if col != "time"
+                    ]
+                    session.positional_data.drop_duplicates(
+                        keep="last",
+                        ignore_index=True,
+                        inplace=True,
+                        subset=all_columns_except_time,
+                    )
+
                     session.positional_data.drop_duplicates(
                         keep="last", ignore_index=True, inplace=True
                     )
@@ -190,11 +200,16 @@ if uploaded_file:
 if "dfCoords" in globals():
     st.title("Inspect raw dataframe")
 
+    idx_to_delete = st.number_input(
+        "To delete a row, specify the row index here", value=0
+    )
+
+    if st.button("Confirm deletion"):
+        session.positional_data.drop(idx_to_delete, axis=0, inplace=True)
+
     st.dataframe(session.positional_data)
 
     st.title("Downloda data")
-
-    data = session.positional_data
 
     download_data(
         dfCoords,
