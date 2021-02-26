@@ -24,9 +24,9 @@ tags = {
     "Body orientation point 1 @ Start pass": "#FFFFF5",
     "Body orientation point 2 @ Start pass": "#FFFFF6",
     "Ball @ End pass": "#FFFFF1",
-    "Direct opponent of pass sender @ End pass": "#FFFFF2",
     "Intended Pass receiver @ End pass": "#FFFFF3",
     "Interception candidate @ End pass": "#FFFFF4",
+    "Hypothetical pass end location @ End pass": "#FFFFF2",
 }
 
 columns_of_interest = [
