@@ -38,6 +38,7 @@ columns_of_interest = [
     "player_role",
     "situation_id",
     "facing_passing_line",
+    "nationality",
 ]
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
@@ -127,6 +128,9 @@ if uploaded_file:
                     ],
                     index=0,
                 )
+                nationality = st.selectbox(
+                    "Nationality of the interception candidate", ["NL", "BIH", "ITA"]
+                )
                 pass_duration = st.text_input(
                     "Pass duration in seconds and fraction of second (e.g. 0.50 for a 500ms pass)",
                     max_chars=4,
@@ -173,6 +177,7 @@ if uploaded_file:
                     dfCoords["pass_duration"] = pass_duration
                     dfCoords["player_role"] = player_role
                     dfCoords["facing_passing_line"] = is_facing_the_passingline
+                    dfCoords["nationality"] = nationality
 
                     session.positional_data = pd.concat(
                         [session.positional_data, dfCoords[columns_of_interest]],
