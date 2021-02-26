@@ -25,24 +25,24 @@ tags = {
     "Body orientation # TODO": "#FFFFF5",
 }
 
+columns_of_interest = [
+    "team",
+    "x",
+    "y",
+    "time",
+    "player_name",
+    "game_time",
+    "player_role",
+    "situation_id",
+]
+
 st.set_option("deprecation.showfileUploaderEncoding", False)
 st.beta_set_page_config(page_title="BirdsPyView", layout="wide")
 
 
 @dataclass
 class SessionState:
-    positional_data = pd.DataFrame(
-        columns=[
-            "team",
-            "x",
-            "y",
-            "time",
-            "player_name",
-            "game_time",
-            "player_role",
-            "situation_id",
-        ]
-    )
+    positional_data = pd.DataFrame(columns=columns_of_interest)
 
 
 @st.cache(allow_output_mutation=True)
@@ -156,31 +156,18 @@ if uploaded_file:
                     dfCoords["game_time"] = game_time
                     dfCoords["player_role"] = player_role
 
-                    columns_of_interest = dfCoords.loc[
-                        :,
-                        [
-                            "team",
-                            "x",
-                            "y",
-                            "time",
-                            "player_name",
-                            "game_time",
-                            "player_role",
-                            "situation_id",
-                        ],
-                    ]
-
                     session.positional_data = pd.concat(
-                        [session.positional_data, columns_of_interest],
+                        [session.positional_data, dfCoords[columns_of_interest]],
                         axis=0,
                     )
 
-                    session.positional_data.drop_duplicates(
-                        keep="last", ignore_index=True, inplace=True
-                    )
 
 if "dfCoords" in globals():
     st.title("Inspect raw dataframe")
+    session.positional_data.drop_duplicates(
+        keep="last", ignore_index=True, inplace=True
+    )
+
     st.dataframe(session.positional_data)
 
     st.title("Downloda data")
@@ -189,16 +176,7 @@ if "dfCoords" in globals():
 
     download_data(
         dfCoords,
-        [
-            "team",
-            "x",
-            "y",
-            "time",
-            "game_time",
-            "player_name",
-            "player_role",
-            "situation_id",
-        ],
+        columns_of_interest,
     )
 
     if st.button("Clear all cached data"):

@@ -77,7 +77,7 @@ def visualize_pitch(uploaded_file, pitch):
         t = st.slider(
             "You have uploaded a video. Choose the frame you want to process:",
             0.0,
-            60.0,
+            15.0,
         )
         snapshot = PitchImage(pitch, image=play.get_frame(t))
     else:
