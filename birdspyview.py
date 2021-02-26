@@ -25,7 +25,7 @@ tags = {
     "Body orientation point 2 @ Start pass": "#FFFFF6",
     "Ball @ End pass": "#FFFFF1",
     "Direct opponent of pass sender @ End pass": "#FFFFF2",
-    "Pass receiver @ End pass": "#FFFFF3",
+    "Intended Pass receiver @ End pass": "#FFFFF3",
     "Interception candidate @ End pass": "#FFFFF4",
 }
 
@@ -37,6 +37,7 @@ columns_of_interest = [
     "pass_duration",
     "player_role",
     "situation_id",
+    "facing_passing_line",
 ]
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
@@ -108,7 +109,10 @@ if uploaded_file:
                     "Select Player to annotate position: ", list(tags.keys())
                 )
                 stroke_color = tags[team_color]
-                # body_orientation_lines = st.checkbox("Draw line for body orientation")
+                is_facing_the_passingline = st.checkbox(
+                    "Is the pass interception candidate facing the passing line?",
+                    value=True,
+                )
                 original = True  # st.checkbox('Select on original image', value=True)
                 situation_id = st.text_input("Situation ID (e.g. 1)", value="1")
                 player_name = st.text_input(
@@ -168,6 +172,7 @@ if uploaded_file:
                     dfCoords["player_name"] = player_name
                     dfCoords["pass_duration"] = pass_duration
                     dfCoords["player_role"] = player_role
+                    dfCoords["facing_passing_line"] = is_facing_the_passingline
 
                     session.positional_data = pd.concat(
                         [session.positional_data, dfCoords[columns_of_interest]],
