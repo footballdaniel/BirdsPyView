@@ -20,20 +20,20 @@ tags = {
     "Direct opponent of pass sender @ Start pass": "#a52a2b",
     "Intended pass receiver @ Start pass": "#a52a2c",
     "Interception candidate @ Start pass": "#a52a2d",
+    "Body orientation point 1 @ Start pass": "#FFFFF5",
+    "Body orientation point 2 @ Start pass": "#FFFFF6",
     "Ball @ End pass": "#FFFFF1",
     "Direct opponent of pass sender @ End pass": "#FFFFF2",
     "Pass receiver @ End pass": "#FFFFF3",
     "Interception candidate @ End pass": "#FFFFF4",
-    "Body orientation # TODO": "#FFFFF5",
 }
 
 columns_of_interest = [
     "team",
     "x",
     "y",
-    "time",
     "player_name",
-    "game_time",
+    "pass_duration",
     "player_role",
     "situation_id",
 ]
@@ -63,7 +63,7 @@ pitch = FootballPitch()
 
 
 if uploaded_file:
-    t, snapshot = visualize_pitch(uploaded_file, pitch)
+    snapshot = visualize_pitch(uploaded_file, pitch)
 
     st.title("Pitch lines")
 
@@ -122,12 +122,14 @@ if uploaded_file:
                     ],
                     index=0,
                 )
-                game_time = st.text_input(
-                    "Game time in MM:SS (e.g. 05:00)", max_chars=5, value="00:00"
+                pass_duration = st.text_input(
+                    "Pass duration in seconds and fraction of second (e.g. 0.50 for a 500ms pass)",
+                    max_chars=4,
+                    value="0.50",
                 )
-                if len(game_time) < 5 & len(game_time) > 0:
+                if len(pass_duration) < 3 & len(pass_duration) > 0:
                     st.warning(
-                        "Game time has to have 5 character. use the format 00:00"
+                        "Pass duration has to be indicated with the format S.FF (e.g. 0.50 s)"
                     )
 
                 update = st.button("Update data")
@@ -156,9 +158,9 @@ if uploaded_file:
 
                     # Add metadata to dataframe
                     dfCoords["situation_id"] = situation_id
-                    dfCoords["time"] = t
+                    dfCoords["pass_duration"] = pass_duration
                     dfCoords["player_name"] = player_name
-                    dfCoords["game_time"] = game_time
+                    dfCoords["pass_duration"] = pass_duration
                     dfCoords["player_role"] = player_role
 
                     session.positional_data = pd.concat(
@@ -166,18 +168,14 @@ if uploaded_file:
                         axis=0,
                     )
 
-                    all_columns_except_time = [
-                        col for col in session.positional_data.columns if col != "time"
-                    ]
                     session.positional_data.drop_duplicates(
                         keep="last",
                         ignore_index=True,
                         inplace=True,
-                        subset=all_columns_except_time,
                     )
 
                     session.positional_data.drop_duplicates(
-                        keep="last", ignore_index=True, inplace=True
+                        keep="first", ignore_index=True, inplace=True
                     )
 
                 st.title("Overlay of positional data of current frame")

@@ -83,7 +83,7 @@ def visualize_pitch(uploaded_file, pitch):
     else:
         snapshot = PitchImage(pitch, image_bytes=uploaded_file)
         t = 0.0
-    return t, snapshot
+    return snapshot
 
 
 class Homography:
