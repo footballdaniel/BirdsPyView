@@ -67,8 +67,8 @@ def get_field_lines(pitch, snapshot, col1, col2, col3):
     return canvas_image, hlines, vlines
 
 
-def download_data(dfCoords, colnames):
-    st.markdown(get_table_download_link(dfCoords[colnames]), unsafe_allow_html=True)
+def download_data(data):
+    st.markdown(get_table_download_link(data), unsafe_allow_html=True)
 
 
 def visualize_pitch(uploaded_file, pitch):

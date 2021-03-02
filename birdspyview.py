@@ -218,10 +218,7 @@ if "dfCoords" in globals():
 
     st.title("Downloda data")
 
-    download_data(
-        dfCoords,
-        columns_of_interest,
-    )
+    download_data(session.positional_data)
 
     if st.button("Clear all cached data"):
         session.positional_data = pd.DataFrame(columns=session.positional_data.columns)
