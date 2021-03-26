@@ -1,6 +1,9 @@
 from dataclasses import dataclass
-import streamlit as st
+
 import pandas as pd
+import streamlit as st
+from streamlit_drawable_canvas import st_canvas
+
 from helpers import (
     download_data,
     visualize_pitch,
@@ -10,7 +13,6 @@ from helpers import (
     PitchDraw,
 )
 from pitch import FootballPitch
-from streamlit_drawable_canvas import st_canvas
 
 tags = {
     "Direct opponent of pass sender @ Pre pass": "#00fff1",
@@ -63,7 +65,6 @@ uploaded_file = st.file_uploader(
     "Select Image file to open:", type=["png", "jpg", "mp4"]
 )
 pitch = FootballPitch()
-
 
 if uploaded_file:
     snapshot = visualize_pitch(uploaded_file, pitch)
@@ -211,14 +212,17 @@ if uploaded_file:
                 st.image(draw.compose_image(sensitivity))
 
 
+def empty_uploaded_cache():
+    global uploaded_file
+    uploaded_file = None
+
+
 if "dfCoords" in globals():
     st.title("Inspect raw dataframe")
-
     st.dataframe(session.positional_data)
-
     st.title("Downloda data")
-
     download_data(session.positional_data)
 
     if st.button("Clear all cached data"):
         session.positional_data = pd.DataFrame(columns=session.positional_data.columns)
+        empty_uploaded_cache()
